@@ -11,6 +11,9 @@ class Minesweeper{
         this.board = [];
         this.events = new EventHandler();
         this.sprites = null;
+        this.tileSize = Math.floor(this.width/this.cols);
+        this.gameWidth = this.tileSize * cols;
+        this.gameHeight = this.tileSize * rows;
         this.pauseMouseMovementRender = false;
         this.pauseLeftClickHandling = false;
         this.gameStarted = false;
@@ -147,7 +150,7 @@ class Minesweeper{
     }
 
     getTileFromPos(x, y){
-        var tileSize = this.getTileSize();
+        var tileSize = this.tileSize;
         var tileX = Math.floor(x/tileSize);
         var tileY = Math.floor(y/tileSize);
 
@@ -212,7 +215,7 @@ class Minesweeper{
 
         var renderRedRect = function(){
             c.fillStyle = "rgba(255, 0, 0, 0.2)";
-            c.fillRect(0, 0, self.width, self.height);
+            c.fillRect(0, 0, self.gameWidth, self.gameHeight);
         }
 
         var clearRect = function() {
@@ -380,7 +383,7 @@ class Minesweeper{
     }
 
     loadSprites(callback){
-        var tileSize = this.getTileSize();
+        var tileSize = this.tileSize;
         var loader = new SpriteLoader();
         loader.add('tile','img/tile.png', tileSize);
         loader.add('mine','img/mine.png', tileSize);
@@ -399,7 +402,7 @@ class Minesweeper{
         for(var y = 0; y < this.rows; y++){
             var row = [];
             for(var x = 0; x < this.cols; x++){
-                var tileSize = this.getTileSize();
+                var tileSize = this.tileSize;
                 row.push(new Tile(tileSize, x, y));
             }
 
