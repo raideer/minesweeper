@@ -88,6 +88,7 @@ var Minesweeper = function () {
     }, {
         key: 'initMouseListener',
         value: function initMouseListener() {
+
             var self = this;
             var rect = this.canvas.getBoundingClientRect();
 
@@ -345,6 +346,11 @@ var Minesweeper = function () {
 
                 if (!self.minesGenerated) {
                     self.generateMines(tile);
+                }
+
+                if (tile.isFlag) {
+                    tile.isFlag = false;
+                    return;
                 }
 
                 if (tile.adjacentMines == 0 && !tile.isMine) {

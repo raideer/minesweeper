@@ -33,6 +33,7 @@ class Minesweeper{
     }
 
     initMouseListener(){
+
         var self = this;
         var rect = this.canvas.getBoundingClientRect();
 
@@ -272,6 +273,11 @@ class Minesweeper{
 
             if(!self.minesGenerated){
                 self.generateMines(tile);
+            }
+
+            if(tile.isFlag){
+                tile.isFlag = false;
+                return;
             }
 
             if(tile.adjacentMines == 0 && !tile.isMine){
