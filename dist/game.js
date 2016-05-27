@@ -300,6 +300,13 @@ var Minesweeper = function () {
             this.events.emit('game.end', { 'won': true });
         }
     }, {
+        key: 'stop',
+        value: function stop() {
+            this.gameEnded = true;
+            this.events.emit('game.end', { 'won': false });
+            this.revealTiles(2, false);
+        }
+    }, {
         key: 'revealNeighboursRecursive',
         value: function revealNeighboursRecursive(tile) {
             var neighbours = this.getTileNeighbours(tile, true);
@@ -669,6 +676,9 @@ var game = {
             }
         });
     },
+    stop: function stop() {
+        this.g.stop();
+    },
     startTime: function startTime() {
         var self = this;
         this.loop = setTimeout(tick, 1000);
@@ -693,19 +703,24 @@ window.onload = function () {
 
     function createGame() {
         var d = difficulties[difficulty];
+        $('#container').width(d[3]).height(d[4]);
+        canvas.width = d[3];
+        canvas.height = d[4];
         game.create(canvas, d[0], d[1], d[2]);
     }
 
     $('#newGame').click(function () {
-        createGame();
+        var state = $(this).data('state');
+        if (state == 0) {
+            createGame();
+        } else {
+            game.stop();
+        }
     });
 
     $('.difficulty').click(function () {
         difficulty = $(this).data('difficulty');
         var d = difficulties[difficulty];
-        $('#container').width(d[3]).height(d[4]);
-        canvas.width = d[3];
-        canvas.height = d[4];
         $('.difficulty').removeClass('grey');
         $(this).addClass('grey');
 
@@ -714,7 +729,16 @@ window.onload = function () {
 
     game.create(canvas);
 
+    game.events.on('game.start', function () {
+        $('#timer').html('000');
+        $('#newGame').html('Stop').data('state', 1);
+    });
+
+    game.events.on('game.stop', function () {
+        $('#newGame').html('New game').data('state', 0);
+    });
+
     game.events.on('time.tick', function (time) {
-        document.querySelector('#timer').innerHTML = ('000' + time).substr(-3);
+        $('#timer').html(('000' + time).substr(-3));
     });
 };

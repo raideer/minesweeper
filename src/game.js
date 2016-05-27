@@ -30,6 +30,9 @@ var game = {
             }
         });
     },
+    stop: function() {
+        this.g.stop();
+    },
     startTime: function() {
         var self = this;
         this.loop = setTimeout(tick, 1000);
@@ -65,7 +68,12 @@ window.onload = function() {
     }
 
     $('#newGame').click(function (){
-        createGame();
+        var state = $(this).data('state');
+        if(state == 0){
+            createGame();
+        }else{
+            game.stop();
+        }
     });
 
     $('.difficulty').click(function() {
@@ -79,7 +87,16 @@ window.onload = function() {
 
     game.create(canvas);
 
+    game.events.on('game.start', function () {
+        $('#timer').html('000');
+        $('#newGame').html('Stop').data('state', 1);
+    });
+
+    game.events.on('game.stop', function () {
+        $('#newGame').html('New game').data('state', 0);
+    });
+
     game.events.on('time.tick', function(time) {
-        document.querySelector('#timer').innerHTML = ('000' + time).substr(-3);
+        $('#timer').html(('000' + time).substr(-3));
     });
 }

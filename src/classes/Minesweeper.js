@@ -230,6 +230,12 @@ class Minesweeper{
         this.events.emit('game.end', {'won': true});
     }
 
+    stop(){
+        this.gameEnded = true;
+        this.events.emit('game.end', {'won': false});
+        this.revealTiles(2, false);
+    }
+
     revealNeighboursRecursive(tile){
         var neighbours = this.getTileNeighbours(tile, true);
         for(var i in neighbours){
