@@ -1,0 +1,25 @@
+@import url(https://fonts.googleapis.com/css?family=Squada+One);
+#container {
+  width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 50px; }
+
+#menu {
+  height: 50px;
+  line-height: 50px;
+  position: relative; }
+
+#newGame {
+  display: inline-block;
+  margin-right: 10px;
+  height: 25px; }
+
+#timer {
+  position: absolute;
+  font-family: 'Squada One', cursive;
+  right: 10px;
+  top: 0;
+  height: 50px;
+  font-size: 30px;
+  line-height: 50px; }

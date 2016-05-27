@@ -3,9 +3,14 @@
     <head>
         <meta charset="utf-8">
         <title>Minesweeper</title>
+        <link rel="stylesheet" href="dist/app.css">
     </head>
     <body>
-        <div id="container" style="width: 500px; margin-left: auto; margin-right: auto; margin-top: 100px; margin-bottom: 200px;">
+        <div id="container">
+            <div id="menu">
+                <button id="newGame">New game</button>
+                <div id="timer">000</div>
+            </div>
             <canvas id="game"></canvas>
         </div>
 

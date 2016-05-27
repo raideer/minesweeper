@@ -45,9 +45,9 @@ var EventHandler = function () {
 
 var Minesweeper = function () {
     function Minesweeper(canvas) {
-        var mines = arguments.length <= 1 || arguments[1] === undefined ? 5 : arguments[1];
-        var cols = arguments.length <= 2 || arguments[2] === undefined ? 10 : arguments[2];
-        var rows = arguments.length <= 3 || arguments[3] === undefined ? 10 : arguments[3];
+        var mines = arguments.length <= 1 || arguments[1] === undefined ? 10 : arguments[1];
+        var cols = arguments.length <= 2 || arguments[2] === undefined ? 9 : arguments[2];
+        var rows = arguments.length <= 3 || arguments[3] === undefined ? 9 : arguments[3];
 
         _classCallCheck(this, Minesweeper);
 
@@ -64,6 +64,8 @@ var Minesweeper = function () {
         this.sprites = null;
         this.pauseMouseMovementRender = false;
         this.pauseLeftClickHandling = false;
+        this.gameStarted = false;
+        this.gameEnded = false;
         this.loadSprites(function (sprites) {
             self.sprites = sprites;
             self.generateBoard();
@@ -74,8 +76,22 @@ var Minesweeper = function () {
     }
 
     _createClass(Minesweeper, [{
+        key: 'addStartListener',
+        value: function addStartListener(closure) {
+            this.events.on('game.start', closure);
+        }
+    }, {
+        key: 'addEndListener',
+        value: function addEndListener(closure) {
+            this.events.on('game.end', closure);
+        }
+    }, {
         key: 'initMouseListener',
         value: function initMouseListener() {
+            if (this.gameEnded) {
+                return;
+            }
+
             var self = this;
             var rect = this.canvas.getBoundingClientRect();
 
@@ -128,9 +144,25 @@ var Minesweeper = function () {
             return { x: x, y: y };
         }
     }, {
+        key: 'revealMines',
+        value: function revealMines() {
+            var random = arguments.length <= 0 || arguments[0] === undefined ? true : arguments[0];
+
+            for (var y = 0; y < this.rows; y++) {
+                for (var x = 0; x < this.cols; x++) {
+                    var tile = this.getTileFromCoords(x, y);
+                    if (tile.isMine) {
+                        tile.isOpen = true;
+                    }
+                }
+            }
+
+            this.render();
+        }
+    }, {
         key: 'revealTiles',
         value: function revealTiles() {
-            var delay = arguments.length <= 0 || arguments[0] === undefined ? 100 : arguments[0];
+            var delay = arguments.length <= 0 || arguments[0] === undefined ? 50 : arguments[0];
             var random = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
             var tiles = arguments[2];
 
@@ -148,7 +180,7 @@ var Minesweeper = function () {
 
             var self = this;
 
-            setTimeout(function () {
+            function run() {
                 if (random) {
                     var randomI = Math.floor(Math.random() * tiles.length);
                     var tile = tiles[randomI];
@@ -163,7 +195,15 @@ var Minesweeper = function () {
                 if (tiles.length > 0) {
                     self.revealTiles(delay, random, tiles);
                 }
-            }, delay);
+            }
+
+            if (delay == 0) {
+                run();
+            } else {
+                setTimeout(function () {
+                    run();
+                }, delay);
+            }
         }
     }, {
         key: 'getTileFromPos',
@@ -231,6 +271,8 @@ var Minesweeper = function () {
     }, {
         key: 'gameLost',
         value: function gameLost(callback, delay) {
+            this.gameEnded = true;
+            this.events.emit('game.end', { 'won': false });
             var c = this.canvas.getContext('2d');
             var self = this;
 
@@ -251,7 +293,8 @@ var Minesweeper = function () {
     }, {
         key: 'gameWon',
         value: function gameWon() {
-            alert("you Won");
+            this.gameEnded = true;
+            this.events.emit('game.end', { 'won': true });
         }
     }, {
         key: 'revealNeighboursRecursive',
@@ -287,9 +330,15 @@ var Minesweeper = function () {
         key: 'handleEvents',
         value: function handleEvents() {
             var self = this;
+
             this.events.on('tile.leftClick', function (tile) {
                 if (self.pauseLeftClickHandling) {
                     return;
+                }
+
+                if (!self.gameStarted) {
+                    self.events.emit('game.start');
+                    self.gameStarted = true;
                 }
 
                 if (!self.minesGenerated) {
@@ -304,7 +353,7 @@ var Minesweeper = function () {
                     self.pauseMouseMovementRender = true;
                     self.gameLost(function () {
                         tile.exploded = true;
-                        self.revealTiles(5);
+                        self.revealMines();
                         self.pauseMouseMovementRender = false;
                     }, 100);
                 } else if (tile.adjacentMines == 0) {}
@@ -318,7 +367,6 @@ var Minesweeper = function () {
             });
 
             this.events.on('tile.rightClick', function (tile) {
-                console.log('right');
                 if (tile.isFlag) {
                     tile.isFlag = false;
                 } else {
@@ -409,6 +457,8 @@ var Minesweeper = function () {
     }, {
         key: 'generateBoard',
         value: function generateBoard() {
+            this.board = [];
+
             for (var y = 0; y < this.rows; y++) {
                 var row = [];
                 for (var x = 0; x < this.cols; x++) {
@@ -575,21 +625,62 @@ var Tile = function () {
 }();
 
 var game = {
-    g: null,
+    events: new EventHandler(),
+    init: function init(canvas, bombs, cols, rows) {
+        this.g = new Minesweeper(canvas, bombs, cols, rows);
+        this.time = 0;
+        this.loop = null;
+    },
     create: function create(canvas) {
-        var bombs = arguments.length <= 1 || arguments[1] === undefined ? 5 : arguments[1];
-        var cols = arguments.length <= 2 || arguments[2] === undefined ? 10 : arguments[2];
-        var rows = arguments.length <= 3 || arguments[3] === undefined ? 10 : arguments[3];
+        var bombs = arguments.length <= 1 || arguments[1] === undefined ? 40 : arguments[1];
+        var cols = arguments.length <= 2 || arguments[2] === undefined ? 16 : arguments[2];
+        var rows = arguments.length <= 3 || arguments[3] === undefined ? 16 : arguments[3];
 
+        if (this.loop != null) {
+            this.stopTime();
+        }
+        this.init(canvas, bombs, cols, rows);
+        var self = this;
         if (cols * rows <= bombs) {
             return alert("Invalid size/bomb amount");
         }
 
-        this.g = new Minesweeper(canvas, cols, rows, bombs);
+        this.g.addStartListener(function () {
+            self.startTime();
+            self.events.emit('game.start');
+        });
+
+        this.g.addEndListener(function (game) {
+            self.stopTime();
+            self.events.emit('game.stop', game);
+
+            if (game.won) {
+                alert('You won!');
+            }
+        });
+    },
+    startTime: function startTime() {
+        var self = this;
+        this.loop = setTimeout(tick, 1000);
+        function tick() {
+            self.time++;
+            self.events.emit('time.tick', self.time);
+            self.loop = setTimeout(tick, 1000);
+        }
+    },
+    stopTime: function stopTime() {
+        clearTimeout(this.loop);
     }
 };
 
 window.onload = function () {
     var canvas = document.querySelector('#game');
-    game.create(canvas, 10);
+    document.querySelector('#newGame').onclick = function () {
+        game.create(canvas);
+        document.querySelector('#timer').innerHTML = "000";
+    };
+    game.create(canvas);
+    game.events.on('time.tick', function (time) {
+        document.querySelector('#timer').innerHTML = ('000' + time).substr(-3);
+    });
 };

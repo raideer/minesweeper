@@ -1,5 +1,5 @@
 class Minesweeper{
-    constructor(canvas, mines = 5, cols = 10, rows = 10){
+    constructor(canvas, mines = 10, cols = 9, rows = 9){
         var self = this;
         this.minesGenerated = false;
         this.canvas = canvas;
@@ -13,6 +13,8 @@ class Minesweeper{
         this.sprites = null;
         this.pauseMouseMovementRender = false;
         this.pauseLeftClickHandling = false;
+        this.gameStarted = false;
+        this.gameEnded = false;
         this.loadSprites(function(sprites){
             self.sprites = sprites;
             self.generateBoard();
@@ -22,7 +24,19 @@ class Minesweeper{
         });
     }
 
+    addStartListener(closure){
+        this.events.on('game.start', closure);
+    }
+
+    addEndListener(closure){
+        this.events.on('game.end', closure);
+    }
+
     initMouseListener(){
+        if(this.gameEnded){
+            return;
+        }
+
         var self = this;
         var rect = this.canvas.getBoundingClientRect();
 
@@ -74,7 +88,20 @@ class Minesweeper{
         return {x, y};
     }
 
-    revealTiles(delay = 100, random = true, tiles){
+    revealMines(random = true){
+        for(var y=0;y<this.rows;y++){
+            for(var x=0;x<this.cols;x++){
+                var tile = this.getTileFromCoords(x, y);
+                if(tile.isMine){
+                    tile.isOpen = true;
+                }
+            }
+        }
+
+        this.render();
+    }
+
+    revealTiles(delay = 50, random = true, tiles){
         if(!tiles){
             tiles = [];
             for(var y=0;y<this.rows;y++){
@@ -89,7 +116,7 @@ class Minesweeper{
 
         var self = this;
 
-        setTimeout(function() {
+        function run(){
             if(random){
                 var randomI = Math.floor(Math.random()*tiles.length);
                 var tile = tiles[randomI];
@@ -104,7 +131,16 @@ class Minesweeper{
             if(tiles.length > 0){
                 self.revealTiles(delay, random, tiles);
             }
-        }, delay);
+        }
+
+        if(delay == 0){
+            run();
+        }else{
+            setTimeout(function() {
+                run();
+            }, delay);
+        }
+
     }
 
     getTileFromPos(x, y){
@@ -166,6 +202,8 @@ class Minesweeper{
     }
 
     gameLost(callback, delay){
+        this.gameEnded = true;
+        this.events.emit('game.end', {'won': false});
         var c = this.canvas.getContext('2d');
         var self = this;
 
@@ -185,7 +223,9 @@ class Minesweeper{
     }
 
     gameWon(){
-        alert("you Won");
+        this.gameEnded = true;
+        this.events.emit('game.end', {'won': true});
+
     }
 
     revealNeighboursRecursive(tile){
@@ -218,9 +258,15 @@ class Minesweeper{
 
     handleEvents(){
         var self = this;
+
         this.events.on('tile.leftClick', function(tile) {
             if(self.pauseLeftClickHandling){
                 return;
+            }
+
+            if(!self.gameStarted){
+                self.events.emit('game.start');
+                self.gameStarted = true;
             }
 
             if(!self.minesGenerated){
@@ -235,7 +281,7 @@ class Minesweeper{
                 self.pauseMouseMovementRender = true;
                 self.gameLost(function(){
                     tile.exploded = true;
-                    self.revealTiles(5);
+                    self.revealMines();
                     self.pauseMouseMovementRender = false;
                 }, 100);
             }else if(tile.adjacentMines == 0){
@@ -251,7 +297,6 @@ class Minesweeper{
         });
 
         this.events.on('tile.rightClick', function(tile) {
-            console.log('right');
             if(tile.isFlag){
                 tile.isFlag = false;
             }else{
@@ -335,9 +380,11 @@ class Minesweeper{
     }
 
     generateBoard(){
-        for(var y = 0; y<this.rows; y++){
+        this.board = [];
+
+        for(var y = 0; y < this.rows; y++){
             var row = [];
-            for(var x = 0; x<this.cols; x++){
+            for(var x = 0; x < this.cols; x++){
                 var tileSize = this.getTileSize();
                 row.push(new Tile(tileSize, x, y));
             }
