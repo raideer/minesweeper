@@ -1,7 +1,7 @@
 @import url(https://fonts.googleapis.com/css?family=Squada+One);
 
 #container{
-    width: 600px;
+    width: 500px;
     margin-left: auto;
     margin-right: auto;
     margin-top: 50px;
@@ -15,8 +15,6 @@
 
 #newGame{
     display: inline-block;
-    margin-right: 10px;
-    height: 25px;
 }
 
 #timer{
@@ -27,4 +25,5 @@
     height: 50px;
     font-size: 30px;
     line-height: 50px;
+    color: rgb(105, 105, 105);
 }

@@ -45,11 +45,40 @@ var game = {
 }
 
 window.onload = function() {
+
     var canvas = document.querySelector('#game');
-    document.querySelector('#newGame').onclick = function() {
-        game.create(canvas);
+
+    var difficulties = [
+        [10, 9, 9, 500, 500],
+        [40, 16, 16, 500, 500],
+        [99, 30, 16, 800, 500]
+    ];
+
+    function setDifficulty(dif){
+        var data = difficulties[dif];
+        newGame(canvas, data[0], data[1], data[2]);
+    }
+
+    function newGame(canvas, m, x, y){
+        game.create(canvas, m, x, y);
         document.querySelector('#timer').innerHTML = "000";
     }
+
+    document.querySelector('#newGame').onclick = function() {
+        newGame(canvas)
+    }
+
+    $('.difficulty').click(function() {
+        var dif = $(this).data("difficulty");
+        var d = difficulties[dif];
+        $('#container').width(d[3]).height(d[4]);
+        canvas.width = d[3];
+        canvas.height = d[4];
+        setDifficulty(dif);
+        $('.difficulty').removeClass('grey');
+        $(this).addClass('grey');
+    });
+
     game.create(canvas);
     game.events.on('time.tick', function(time) {
         document.querySelector('#timer').innerHTML = ('000' + time).substr(-3);

@@ -4,17 +4,33 @@
         <meta charset="utf-8">
         <title>Minesweeper</title>
         <link rel="stylesheet" href="dist/app.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.1.8/semantic.min.css">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.3/jquery.slim.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.1.8/components/dropdown.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.1.8/components/transition.min.js"></script>
     </head>
     <body>
         <div id="container">
             <div id="menu">
-                <button id="newGame">New game</button>
+                <button id="newGame" class="ui button small">New game</button>
+                <div class="ui buttons small">
+                  <button data-difficulty="0" class="ui button difficulty">
+                    Easy
+                  </button>
+                  <button data-difficulty="1" class="ui grey button difficulty">
+                    Intermediate
+                  </button>
+                  <button data-difficulty="2" class="ui button difficulty">
+                    Expert
+                  </button>
+                </div>
                 <div id="timer">000</div>
             </div>
             <canvas id="game"></canvas>
         </div>
 
         <script type="text/javascript">
+            $('.dropdown').dropdown();
             var canvas = document.querySelector('#game');
             var dimensions = document.querySelector('#container').offsetWidth;
             canvas.setAttribute('width', dimensions);

@@ -262,7 +262,7 @@ class Minesweeper{
         var self = this;
 
         this.events.on('tile.leftClick', function(tile) {
-            if(self.pauseLeftClickHandling){
+            if(self.pauseLeftClickHandling || tile == null){
                 return;
             }
 
@@ -432,7 +432,8 @@ class Minesweeper{
 
                 if(tile.isOpen && !tile.isMine && tile.adjacentMines != 0){
                     var pos = tile.getCenterPosition();
-                    c.font = "20px arial";
+                    var fontSize = Math.floor(tileSize * 0.6);
+                    c.font = "bold " + fontSize + "px Courier";
                     c.textAlign = "center";
                     c.textBaseline = "middle";
                     c.fillStyle = this.getFontColor(tile.adjacentMines);
