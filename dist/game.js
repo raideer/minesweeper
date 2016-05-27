@@ -175,12 +175,14 @@ var Minesweeper = function () {
             if (!tiles) {
                 tiles = [];
                 for (var y = 0; y < this.rows; y++) {
+                    var row = [];
                     for (var x = 0; x < this.cols; x++) {
                         var tile = this.getTileFromCoords(x, y);
                         if (tile != null) {
-                            tiles.push(tile);
+                            row.push(tile);
                         }
                     }
+                    tiles.push(row);
                 }
             }
 
@@ -189,13 +191,15 @@ var Minesweeper = function () {
             function run() {
                 if (random) {
                     var randomI = Math.floor(Math.random() * tiles.length);
-                    var tile = tiles[randomI];
+                    var row = tiles[randomI];
                     tiles.splice(randomI, 1);
                 } else {
-                    var tile = tiles.shift();
+                    var row = tiles.shift();
                 }
 
-                tile.isOpen = true;
+                for (var i in row) {
+                    row[i].isOpen = true;
+                }
                 self.render();
 
                 if (tiles.length > 0) {
@@ -307,7 +311,7 @@ var Minesweeper = function () {
         value: function stop() {
             this.gameEnded = true;
             this.events.emit('game.end', { 'won': false });
-            this.revealTiles(2, false);
+            this.revealTiles(50, false);
         }
     }, {
         key: 'revealNeighboursRecursive',
@@ -673,10 +677,6 @@ var game = {
         this.g.addEndListener(function (game) {
             self.stopTime();
             self.events.emit('game.stop', game);
-
-            if (game.won) {
-                alert('You won!');
-            }
         });
     },
     stop: function stop() {
@@ -684,11 +684,11 @@ var game = {
     },
     startTime: function startTime() {
         var self = this;
-        this.loop = setTimeout(tick, 1000);
+        this.loop = setTimeout(tick, 100);
         function tick() {
             self.time++;
             self.events.emit('time.tick', self.time);
-            self.loop = setTimeout(tick, 1000);
+            self.loop = setTimeout(tick, 100);
         }
     },
     stopTime: function stopTime() {
@@ -726,22 +726,27 @@ window.onload = function () {
         var d = difficulties[difficulty];
         $('.difficulty').removeClass('grey');
         $(this).addClass('grey');
-
+        $('#newGame').html('New game').data('state', 0);
         createGame();
     });
 
-    game.create(canvas);
+    createGame();
 
     game.events.on('game.start', function () {
         $('#timer').html('000');
         $('#newGame').html('Stop').data('state', 1);
     });
 
-    game.events.on('game.stop', function () {
+    game.events.on('game.stop', function (g) {
         $('#newGame').html('New game').data('state', 0);
+        if (g.won) {
+            var time = $('#timer').html();
+            $('#won .time').html(time / 10);
+            $('#won').modal('show');
+        }
     });
 
     game.events.on('time.tick', function (time) {
-        $('#timer').html(('000' + time).substr(-3));
+        $('#timer').html(('0000' + time).substr(-4));
     });
 };

@@ -111,12 +111,14 @@ class Minesweeper{
         if(!tiles){
             tiles = [];
             for(var y=0;y<this.rows;y++){
+                var row = [];
                 for(var x=0;x<this.cols;x++){
                     var tile = this.getTileFromCoords(x, y);
                     if(tile != null){
-                        tiles.push(tile);
+                        row.push(tile);
                     }
                 }
+                tiles.push(row);
             }
         }
 
@@ -125,13 +127,15 @@ class Minesweeper{
         function run(){
             if(random){
                 var randomI = Math.floor(Math.random()*tiles.length);
-                var tile = tiles[randomI];
+                var row = tiles[randomI];
                 tiles.splice(randomI, 1);
             }else{
-                var tile = tiles.shift();
+                var row = tiles.shift();
             }
 
-            tile.isOpen = true;
+            for(var i in row){
+                row[i].isOpen = true;
+            }
             self.render();
 
             if(tiles.length > 0){
@@ -236,7 +240,7 @@ class Minesweeper{
     stop(){
         this.gameEnded = true;
         this.events.emit('game.end', {'won': false});
-        this.revealTiles(2, false);
+        this.revealTiles(50, false);
     }
 
     revealNeighboursRecursive(tile){
