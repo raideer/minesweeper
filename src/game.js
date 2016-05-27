@@ -58,6 +58,9 @@ window.onload = function() {
 
     function createGame(){
         var d = difficulties[difficulty];
+        $('#container').width(d[3]).height(d[4]);
+        canvas.width = d[3];
+        canvas.height = d[4];
         game.create(canvas, d[0], d[1], d[2]);
     }
 
@@ -68,9 +71,6 @@ window.onload = function() {
     $('.difficulty').click(function() {
         difficulty = $(this).data('difficulty');
         var d = difficulties[difficulty];
-        $('#container').width(d[3]).height(d[4]);
-        canvas.width = d[3];
-        canvas.height = d[4];
         $('.difficulty').removeClass('grey');
         $(this).addClass('grey');
 
