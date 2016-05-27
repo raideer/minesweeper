@@ -350,6 +350,7 @@ var Minesweeper = function () {
 
                 if (tile.isFlag) {
                     tile.isFlag = false;
+                    self.render();
                     return;
                 }
 
