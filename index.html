@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>Minesweeper</title>
+    </head>
+    <body>
+        <div id="container" style="width: 500px; margin-left: auto; margin-right: auto; margin-top: 100px; margin-bottom: 200px;">
+            <canvas id="game"></canvas>
+        </div>
+
+        <script type="text/javascript">
+            var canvas = document.querySelector('#game');
+            var dimensions = document.querySelector('#container').offsetWidth;
+            canvas.setAttribute('width', dimensions);
+            canvas.setAttribute('height', dimensions);
+        </script>
+
+        <script src="dist/game.js"></script>
+    </body>
+</html>
