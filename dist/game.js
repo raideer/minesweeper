@@ -88,15 +88,11 @@ var Minesweeper = function () {
     }, {
         key: 'initMouseListener',
         value: function initMouseListener() {
-            if (this.gameEnded) {
-                return;
-            }
-
             var self = this;
             var rect = this.canvas.getBoundingClientRect();
 
             this.canvas.onclick = function (e) {
-                if (e.button != 0) {
+                if (e.button != 0 || self.gameEnded) {
                     return;
                 }
 
@@ -106,6 +102,9 @@ var Minesweeper = function () {
             };
 
             this.canvas.oncontextmenu = function (e) {
+                if (self.gameEnded) {
+                    return;
+                }
                 e.preventDefault();
                 var pos = self.getPositionReletiveToCanvasFromEvent(e);
                 self.events.emit('tile.rightClick', self.getTileFromPos(pos.x, pos.y));
@@ -113,6 +112,9 @@ var Minesweeper = function () {
 
             var lastTile = null;
             this.canvas.onmousemove = function (e) {
+                if (self.gameEnded) {
+                    return;
+                }
                 var pos = self.getPositionReletiveToCanvasFromEvent(e);
                 var tile = self.getTileFromPos(pos.x, pos.y);
                 if (tile == null) {
