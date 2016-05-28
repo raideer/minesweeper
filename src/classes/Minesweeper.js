@@ -314,7 +314,7 @@ class Minesweeper{
 
             tile.isOpen = true;
 
-            if(self.countClosedTiles() == self.mines){
+            if(self.countClosedTiles() == self.mines && !this.gameEnded){
                 self.gameWon();
             }
             self.render();
