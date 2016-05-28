@@ -16,14 +16,22 @@ var game = {
             return alert("Invalid size/bomb amount");
         }
 
-        this.g.addStartListener(function() {
+        this.handleEvents();
+    },
+    handleEvents: function () {
+        var self = this;
+        this.g.events.on('game.start', function() {
             self.startTime();
             self.events.emit('game.start');
         });
 
-        this.g.addEndListener(function(game) {
+        this.g.events.on('game.end', function(game) {
             self.stopTime();
             self.events.emit('game.stop', game);
+        });
+
+        this.g.events.on('tile.flag', function(state) {
+            self.events.emit('tile.flag', state);
         });
     },
     stop: function() {
@@ -58,6 +66,7 @@ window.onload = function() {
     function createGame(){
         var d = difficulties[difficulty];
         $('#container').width(d[3]).height(d[4]);
+        $('#mines').html(d[0]);
         canvas.width = d[3];
         canvas.height = d[4];
         game.create(canvas, d[0], d[1], d[2]);
@@ -72,6 +81,13 @@ window.onload = function() {
         }
     });
 
+    $('#autoSolve').click(function() {
+        game.g.whenLoaded(function () {
+            var solver = new Solver(game.g);
+            solver.solve();
+        });
+    });
+
     $('.difficulty').click(function() {
         difficulty = $(this).data('difficulty');
         var d = difficulties[difficulty];
@@ -84,7 +100,7 @@ window.onload = function() {
     createGame();
 
     game.events.on('game.start', function () {
-        $('#timer').html('000');
+        $('#timer').html('0000');
         $('#newGame').html('Stop').data('state', 1);
     });
 
@@ -94,6 +110,15 @@ window.onload = function() {
             var time = $('#timer').html();
             $('#won .time').html(time/10);
             $('#won').modal('show');
+        }
+    });
+
+    game.events.on('tile.flag', function(flagged) {
+        var mines = $('#mines');
+        if(flagged){
+            mines.html(mines.html() - 1);
+        }else{
+            mines.html(parseInt(mines.html())+ 1);
         }
     });
 

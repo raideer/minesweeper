@@ -23,6 +23,16 @@
   line-height: 50px;
   color: dimgray; }
 
+#mines {
+  position: absolute;
+  font-family: 'Squada One', cursive;
+  right: 80px;
+  top: 0;
+  height: 50px;
+  font-size: 30px;
+  line-height: 50px;
+  color: dimgray; }
+
 #won {
   width: 400px;
   margin: 0 0 0 -200px; }

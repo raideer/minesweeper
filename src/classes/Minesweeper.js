@@ -18,21 +18,24 @@ class Minesweeper{
         this.pauseLeftClickHandling = false;
         this.gameStarted = false;
         this.gameEnded = false;
+        this.loaded = false;
         this.loadSprites(function(sprites){
             self.sprites = sprites;
             self.generateBoard();
             self.render();
             self.initMouseListener();
             self.handleEvents();
+            self.loaded = true;
+            self.events.emit('game.loaded');
         });
     }
 
-    addStartListener(closure){
-        this.events.on('game.start', closure);
-    }
-
-    addEndListener(closure){
-        this.events.on('game.end', closure);
+    whenLoaded(callback){
+        if(this.loaded){
+            callback();
+        }else{
+            this.events.on('game.loaded', callback);
+        }
     }
 
     initMouseListener(){
@@ -51,10 +54,10 @@ class Minesweeper{
         }
 
         this.canvas.oncontextmenu = function(e) {
+            e.preventDefault();
             if(self.gameEnded){
                 return;
             }
-            e.preventDefault();
             var pos = self.getPositionReletiveToCanvasFromEvent(e);
             self.events.emit('tile.rightClick', self.getTileFromPos(pos.x, pos.y));
         }
@@ -319,8 +322,10 @@ class Minesweeper{
 
         this.events.on('tile.rightClick', function(tile) {
             if(tile.isFlag){
+                self.events.emit('tile.flag', false);
                 tile.isFlag = false;
             }else{
+                self.events.emit('tile.flag', true);
                 tile.isFlag = true;
             }
             self.render();
@@ -394,6 +399,18 @@ class Minesweeper{
         loader.add('flag','img/flag.png', tileSize);
         loader.add('open','img/open.png', tileSize);
         loader.load(callback);
+    }
+
+    getFlaggedNeighbours(tile){
+        var n = this.getTileNeighbours(tile);
+        var flagged = [];
+        for(var i in n){
+            if(n[i].isFlag){
+                flagged.push(n[i]);
+            }
+        }
+
+        return flagged;
     }
 
     getTileSize(){

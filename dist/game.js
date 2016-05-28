@@ -69,24 +69,26 @@ var Minesweeper = function () {
         this.pauseLeftClickHandling = false;
         this.gameStarted = false;
         this.gameEnded = false;
+        this.loaded = false;
         this.loadSprites(function (sprites) {
             self.sprites = sprites;
             self.generateBoard();
             self.render();
             self.initMouseListener();
             self.handleEvents();
+            self.loaded = true;
+            self.events.emit('game.loaded');
         });
     }
 
     _createClass(Minesweeper, [{
-        key: 'addStartListener',
-        value: function addStartListener(closure) {
-            this.events.on('game.start', closure);
-        }
-    }, {
-        key: 'addEndListener',
-        value: function addEndListener(closure) {
-            this.events.on('game.end', closure);
+        key: 'whenLoaded',
+        value: function whenLoaded(callback) {
+            if (this.loaded) {
+                callback();
+            } else {
+                this.events.on('game.loaded', callback);
+            }
         }
     }, {
         key: 'initMouseListener',
@@ -106,10 +108,10 @@ var Minesweeper = function () {
             };
 
             this.canvas.oncontextmenu = function (e) {
+                e.preventDefault();
                 if (self.gameEnded) {
                     return;
                 }
-                e.preventDefault();
                 var pos = self.getPositionReletiveToCanvasFromEvent(e);
                 self.events.emit('tile.rightClick', self.getTileFromPos(pos.x, pos.y));
             };
@@ -391,8 +393,10 @@ var Minesweeper = function () {
 
             this.events.on('tile.rightClick', function (tile) {
                 if (tile.isFlag) {
+                    self.events.emit('tile.flag', false);
                     tile.isFlag = false;
                 } else {
+                    self.events.emit('tile.flag', true);
                     tile.isFlag = true;
                 }
                 self.render();
@@ -473,6 +477,19 @@ var Minesweeper = function () {
             loader.load(callback);
         }
     }, {
+        key: 'getFlaggedNeighbours',
+        value: function getFlaggedNeighbours(tile) {
+            var n = this.getTileNeighbours(tile);
+            var flagged = [];
+            for (var i in n) {
+                if (n[i].isFlag) {
+                    flagged.push(n[i]);
+                }
+            }
+
+            return flagged;
+        }
+    }, {
         key: 'getTileSize',
         value: function getTileSize() {
             return Math.floor(this.width / this.cols);
@@ -547,6 +564,142 @@ var Minesweeper = function () {
     }]);
 
     return Minesweeper;
+}();
+
+var Solver = function () {
+    function Solver(game) {
+        _classCallCheck(this, Solver);
+
+        this.game = game;
+        this.solved = false;
+        this.solvedTiles = [];
+        this.debug = false;
+    }
+
+    _createClass(Solver, [{
+        key: 'solve',
+        value: function solve() {
+            var self = this;
+            var firstTileX = Math.floor(this.game.cols / 2);
+            var firstTileY = Math.floor(this.game.rows / 2);
+            var timeout;
+
+            var func = function func() {
+                self.run(firstTileX, firstTileY);
+                timeout = setTimeout(func, 200);
+            };
+
+            func();
+
+            this.game.events.on('game.end', function () {
+                clearTimeout(timeout);
+            });
+
+            setTimeout(function () {
+                clearTimeout(timeout);
+            }, 7000);
+        }
+    }, {
+        key: 'isSolved',
+        value: function isSolved(x, y) {
+            for (var i in this.solvedTiles) {
+                var coords = this.solvedTiles[i];
+                if (coords[0] == x && coords[1] == y) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }, {
+        key: 'run',
+        value: function run(x, y) {
+            var tile = this.game.getTileFromCoords(x, y);
+            if (tile == null) {
+                return;
+            }
+
+            if (!tile.isOpen) {
+                this.clickOnTile(x, y);
+            }
+
+            this.attemptFlagging();
+            this.attemptClicking();
+        }
+    }, {
+        key: 'attemptClicking',
+        value: function attemptClicking() {
+            for (var i in this.game.board) {
+                var row = this.game.board[i];
+                for (var k in row) {
+                    var tile = row[k];
+                    if (!tile.isOpen || tile.adjacentMines == 0 || this.isSolved(tile.x, tile.y)) {
+                        continue;
+                    }
+                    var flaggedNeighbours = 0;
+                    var closedNeighbours = this.game.getTileNeighbours(tile, true);
+
+                    for (var j in closedNeighbours) {
+                        var n = closedNeighbours[j];
+                        if (n.isFlag) {
+                            flaggedNeighbours++;
+                        }
+                    }
+
+                    if (tile.adjacentMines == flaggedNeighbours) {
+                        for (var j in closedNeighbours) {
+                            var n = closedNeighbours[j];
+                            if (!n.isFlag) {
+                                this.clickOnTile(n.x, n.y);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }, {
+        key: 'attemptFlagging',
+        value: function attemptFlagging() {
+            for (var i in this.game.board) {
+                var row = this.game.board[i];
+                for (var k in row) {
+                    var tile = row[k];
+                    if (!tile.isOpen || tile.adjacentMines == 0 || this.isSolved(tile.x, tile.y)) {
+                        continue;
+                    }
+
+                    var closedNeighbours = this.game.getTileNeighbours(tile, true);
+
+                    if (tile.adjacentMines == closedNeighbours.length) {
+                        for (var j in closedNeighbours) {
+                            var n = closedNeighbours[j];
+                            if (!n.isFlag) {
+                                this.flagTile(n.x, n.y);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }, {
+        key: 'clickOnTile',
+        value: function clickOnTile(x, y) {
+            var tile = this.game.getTileFromCoords(x, y);
+            if (tile != null) {
+                this.game.events.emit('tile.leftClick', tile);
+            }
+        }
+    }, {
+        key: 'flagTile',
+        value: function flagTile(x, y) {
+            this.solvedTiles.push([x, y]);
+            var tile = this.game.getTileFromCoords(x, y);
+            if (tile != null) {
+                this.game.events.emit('tile.rightClick', tile);
+            }
+        }
+    }]);
+
+    return Solver;
 }();
 
 var SpriteLoader = function () {
@@ -669,14 +822,22 @@ var game = {
             return alert("Invalid size/bomb amount");
         }
 
-        this.g.addStartListener(function () {
+        this.handleEvents();
+    },
+    handleEvents: function handleEvents() {
+        var self = this;
+        this.g.events.on('game.start', function () {
             self.startTime();
             self.events.emit('game.start');
         });
 
-        this.g.addEndListener(function (game) {
+        this.g.events.on('game.end', function (game) {
             self.stopTime();
             self.events.emit('game.stop', game);
+        });
+
+        this.g.events.on('tile.flag', function (state) {
+            self.events.emit('tile.flag', state);
         });
     },
     stop: function stop() {
@@ -707,6 +868,7 @@ window.onload = function () {
     function createGame() {
         var d = difficulties[difficulty];
         $('#container').width(d[3]).height(d[4]);
+        $('#mines').html(d[0]);
         canvas.width = d[3];
         canvas.height = d[4];
         game.create(canvas, d[0], d[1], d[2]);
@@ -721,6 +883,13 @@ window.onload = function () {
         }
     });
 
+    $('#autoSolve').click(function () {
+        game.g.whenLoaded(function () {
+            var solver = new Solver(game.g);
+            solver.solve();
+        });
+    });
+
     $('.difficulty').click(function () {
         difficulty = $(this).data('difficulty');
         var d = difficulties[difficulty];
@@ -733,7 +902,7 @@ window.onload = function () {
     createGame();
 
     game.events.on('game.start', function () {
-        $('#timer').html('000');
+        $('#timer').html('0000');
         $('#newGame').html('Stop').data('state', 1);
     });
 
@@ -743,6 +912,15 @@ window.onload = function () {
             var time = $('#timer').html();
             $('#won .time').html(time / 10);
             $('#won').modal('show');
+        }
+    });
+
+    game.events.on('tile.flag', function (flagged) {
+        var mines = $('#mines');
+        if (flagged) {
+            mines.html(mines.html() - 1);
+        } else {
+            mines.html(parseInt(mines.html()) + 1);
         }
     });
 
