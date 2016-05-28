@@ -9,7 +9,7 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.1.8/semantic.min.js"></script>
     </head>
     <body>
-        <div id="container">
+        <div id="container" class="gamewide gamehigh">
             <div id="menu">
                 <button id="newGame" data-state="0" class="ui button small">New game</button>
                 <div class="ui buttons small">
@@ -26,14 +26,15 @@
                 <div id="mines">40</div>
                 <div id="timer">0000</div>
             </div>
-            <canvas id="game"></canvas>
-            <div class="ui buttons small">
-                <button id="autoSolve" class="ui button">
-                  Try auto-solving
-                </button>
+            <canvas id="game" class="gamewide gamehigh"></canvas>
+            <div class="ui horizontal fluid list gamewide">
+                <div class="item">
+                    <button id="autoSolve" class="ui button tiny">
+                      Try auto-solving
+                    </button>
+                </div>
             </div>
         </div>
-
         <div class="ui modal small" id="won">
           <div class="header">You won!</div>
           <div class="content">

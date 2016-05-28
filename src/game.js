@@ -65,10 +65,9 @@ window.onload = function() {
 
     function createGame(){
         var d = difficulties[difficulty];
-        $('#container').width(d[3]).height(d[4]);
+        $('.gamewide').width(d[3]);
+        $('.gamehigh').height(d[4]);
         $('#mines').html(d[0]);
-        canvas.width = d[3];
-        canvas.height = d[4];
         game.create(canvas, d[0], d[1], d[2]);
     }
 
@@ -83,8 +82,11 @@ window.onload = function() {
 
     $('#autoSolve').click(function() {
         game.g.whenLoaded(function () {
+            $('#autoSolve').addClass('loading circular icon').html('');
             var solver = new Solver(game.g);
-            solver.solve();
+            solver.solve(function() {
+                $('#autoSolve').removeClass('loading circular icon ').html('Try auto-solving');
+            });
         });
     });
 

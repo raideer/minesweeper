@@ -39,6 +39,15 @@
     color: rgb(105, 105, 105);
 }
 
+#autoSolve{
+    transition: all 1s;
+
+    &.loading{
+        width: 50px;
+        height: 31px;
+    }
+}
+
 #won{
     width: 400px;
     margin: 0 0 0 -200px;

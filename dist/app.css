@@ -33,6 +33,12 @@
   line-height: 50px;
   color: dimgray; }
 
+#autoSolve {
+  transition: all 1s; }
+  #autoSolve.loading {
+    width: 50px;
+    height: 31px; }
+
 #won {
   width: 400px;
   margin: 0 0 0 -200px; }

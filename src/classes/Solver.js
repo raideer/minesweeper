@@ -4,28 +4,41 @@ class Solver{
         this.solved = false;
         this.solvedTiles = [];
         this.debug = false;
+        this.board = game.board.slice(0);
     }
 
-    solve(){
+    isSolvable(){
+        var self = this;
+        this.board = this.game.board;
+        var firstTileX = Math.floor(this.game.cols / 2);
+        var firstTileY = Math.floor(this.game.rows / 2);
+    }
+
+    solve(done){
         var self = this;
         var firstTileX = Math.floor(this.game.cols / 2);
         var firstTileY = Math.floor(this.game.rows / 2);
         var timeout;
-
         var func = function() {
             self.run(firstTileX, firstTileY);
-            timeout = setTimeout(func, 200);
+            timeout = setTimeout(func, 100);
         }
 
         func();
 
         this.game.events.on('game.end', function() {
             clearTimeout(timeout);
+            if(typeof done == 'function'){
+                done();
+            }
         });
 
         setTimeout(function() {
             clearTimeout(timeout);
-        }, 7000);
+            if(typeof done == 'function'){
+                done();
+            }
+        }, 5000);
     }
 
     isSolved(x, y){
@@ -53,7 +66,7 @@ class Solver{
 
     }
 
-    attemptClicking(){
+    attemptClicking(silent = false){
         for(var i in this.game.board){
             var row = this.game.board[i];
             for(var k in row){
@@ -62,7 +75,12 @@ class Solver{
                     continue;
                 }
                 var flaggedNeighbours = 0;
-                var closedNeighbours = this.game.getTileNeighbours(tile, true);
+
+                if(silent){
+                    var closedNeighbours = this.game.getTileNeighbours(tile, true, this.board);
+                }else{
+                    var closedNeighbours = this.game.getTileNeighbours(tile, true);
+                }
 
                 for(var j in closedNeighbours){
                     var n = closedNeighbours[j];
@@ -75,7 +93,11 @@ class Solver{
                     for(var j in closedNeighbours){
                         var n = closedNeighbours[j];
                         if(!n.isFlag){
-                            this.clickOnTile(n.x, n.y);
+                            if(silent){
+                                n.isOpen = true;
+                            }else{
+                                this.clickOnTile(n.x, n.y);
+                            }
                         }
                     }
                 }
@@ -83,7 +105,7 @@ class Solver{
         }
     }
 
-    attemptFlagging(){
+    attemptFlagging(silent = false){
         for(var i in this.game.board){
             var row = this.game.board[i];
             for(var k in row){
@@ -92,13 +114,21 @@ class Solver{
                     continue;
                 }
 
-                var closedNeighbours = this.game.getTileNeighbours(tile, true);
+                if(silent){
+                    var closedNeighbours = this.game.getTileNeighbours(tile, true, this.board);
+                }else{
+                    var closedNeighbours = this.game.getTileNeighbours(tile, true);
+                }
 
                 if(tile.adjacentMines == closedNeighbours.length){
                     for(var j in closedNeighbours){
                         var n = closedNeighbours[j];
                         if(!n.isFlag){
-                            this.flagTile(n.x, n.y);
+                            if(silent){
+                                this.board[n.y][n.x].isFlag = true;
+                            }else{
+                                this.flagTile(n.x, n.y);
+                            }
                         }
                     }
                 }

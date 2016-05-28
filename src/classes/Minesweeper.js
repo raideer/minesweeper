@@ -168,9 +168,13 @@ class Minesweeper{
         return this.board[tileY][tileX];
     }
 
-    getTileFromCoords(x, y){
+    getTileFromCoords(x, y, board){
         if(x >= this.cols || x < 0 || y >= this.rows || y < 0){
             return null;
+        }
+
+        if(board){
+            return board[y][x];
         }
 
         return this.board[y][x];
@@ -190,7 +194,7 @@ class Minesweeper{
         return neighbours;
     }
 
-    getTileNeighbours(tile, closed = false){
+    getTileNeighbours(tile, closed = false, board){
         var self = this, neighbours = [];
 
         if(tile){
@@ -198,7 +202,7 @@ class Minesweeper{
             coords.forEach(function(pos) {
                 var nX = pos[0];
                 var nY = pos[1];
-                var neighbour = self.getTileFromCoords(nX, nY);
+                var neighbour = self.getTileFromCoords(nX, nY, board);
                 if(neighbour){
                     if(closed){
                         if(!neighbour.isOpen){
@@ -259,10 +263,11 @@ class Minesweeper{
         this.render();
     }
 
-    countClosedTiles(){
+    countClosedTiles(board){
         var closedTiles = 0;
-        for(var i in this.board){
-            var row = this.board[i];
+        var b = (board)?board:this.board;
+        for(var i in b){
+            var row = b[i];
             for(var j in row){
                 var tile = row[j];
                 if(!tile.isOpen){
@@ -308,13 +313,11 @@ class Minesweeper{
                     self.revealMines();
                     self.pauseMouseMovementRender = false;
                 }, 100);
-            }else if(tile.adjacentMines == 0){
-
             }
 
             tile.isOpen = true;
 
-            if(self.countClosedTiles() == self.mines && !this.gameEnded){
+            if(self.countClosedTiles() == self.mines && !self.gameEnded){
                 self.gameWon();
             }
             self.render();
