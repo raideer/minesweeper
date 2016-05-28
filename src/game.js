@@ -65,8 +65,9 @@ window.onload = function() {
 
     function createGame(){
         var d = difficulties[difficulty];
-        $('.gamewide').width(d[3]);
-        $('.gamehigh').height(d[4]);
+        $('#container').width(d[3]).height(d[4]);
+        canvas.width = d[3];
+        canvas.height = d[4];
         $('#mines').html(d[0]);
         game.create(canvas, d[0], d[1], d[2]);
     }
